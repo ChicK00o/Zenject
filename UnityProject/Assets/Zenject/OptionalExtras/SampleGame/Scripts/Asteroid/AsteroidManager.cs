@@ -119,9 +119,10 @@ namespace Asteroids
 
         public void Tick()
         {
-            foreach (var asteroid in _asteroids)
+            int count = _asteroids.Count;
+            for(int i = 0; i < count; i++)
             {
-                asteroid.Tick();
+                _asteroids[i].Tick();
             }
 
             if (_started && _autoSpawn)

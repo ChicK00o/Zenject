@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameScore : MonoBehaviour
 {
@@ -112,12 +113,21 @@ public class GameScore : MonoBehaviour
         }
     }
 
-
-    public void OnLevelWasLoaded(int level)
+    void Awake()
     {
-        if (m_StartTime == 0.0f)
+        SceneManager.sceneLoaded += SceneManagerOnSceneLoaded;
+    }
+
+    private void SceneManagerOnSceneLoaded(Scene arg0, LoadSceneMode loadSceneMode)
+    {
+        if (Math.Abs(m_StartTime) < float.Epsilon)
         {
             m_StartTime = Time.time;
         }
+    }
+
+    void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= SceneManagerOnSceneLoaded;
     }
 }

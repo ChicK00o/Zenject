@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-#if UNITY_5_3
+#if UNITY_5_3  || UNITY_5_4
 using UnityEditor.SceneManagement;
 #endif
 using ModestTree.Util;
@@ -97,7 +97,7 @@ namespace Zenject
                         }
                         else
                         {
-#if UNITY_5_3
+#if UNITY_5_3  || UNITY_5_4
                             if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
 #else
                             if (EditorApplication.SaveCurrentSceneIfUserWantsTo())
