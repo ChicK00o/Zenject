@@ -6,7 +6,7 @@ using System.Linq;
 using ModestTree;
 using Assert=ModestTree.Assert;
 
-namespace Zenject.Tests
+namespace Zenject.Tests.Injection
 {
     [TestFixture]
     public class TestDuplicateInjection : TestWithContainer
@@ -25,17 +25,15 @@ namespace Zenject.Tests
         [Test]
         public void TestCaseDuplicateInjection()
         {
-            Container.Bind<Test0>().ToSingle();
-            Container.Bind<Test0>().ToSingle();
+            Container.Bind<Test0>().AsSingle().NonLazy();
+            Container.Bind<Test0>().AsSingle().NonLazy();
 
-            Container.Bind<Test1>().ToSingle();
+            Container.Bind<Test1>().AsSingle().NonLazy();
 
-            AssertValidationFails();
+            Assert.Throws(() => Container.Validate());
 
-            Assert.Throws<ZenjectResolveException>(
+            Assert.Throws(
                 delegate { Container.Resolve<Test1>(); });
-
-            Assert.That(Container.ValidateResolve<Test1>().Any());
         }
     }
 }

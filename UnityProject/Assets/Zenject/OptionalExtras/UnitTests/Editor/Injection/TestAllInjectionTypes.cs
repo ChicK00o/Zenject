@@ -5,7 +5,7 @@ using NUnit.Framework;
 using ModestTree;
 using Assert=ModestTree.Assert;
 
-namespace Zenject.Tests
+namespace Zenject.Tests.Injection
 {
     [TestFixture]
     public class TestAllInjectionTypes : TestWithContainer
@@ -14,12 +14,11 @@ namespace Zenject.Tests
         // Test all variations of injection
         public void TestCase1()
         {
-            Container.Bind<Test0>().ToInstance(new Test0());
-            Container.Bind<IFoo>().ToSingle<FooDerived>();
+            Container.Bind<Test0>().FromInstance(new Test0()).NonLazy();
+            Container.Bind<IFoo>().To<FooDerived>().AsSingle().NonLazy();
 
-            AssertValidates();
+            Container.Validate();
 
-            Assert.That(Container.ValidateResolve<IFoo>().IsEmpty());
             var foo = Container.Resolve<IFoo>();
 
             Assert.That(foo.DidPostInjectBase);
