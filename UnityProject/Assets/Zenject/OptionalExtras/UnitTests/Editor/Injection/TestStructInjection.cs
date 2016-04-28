@@ -5,7 +5,7 @@ using NUnit.Framework;
 using ModestTree;
 using Assert=ModestTree.Assert;
 
-namespace Zenject.Tests
+namespace Zenject.Tests.Injection
 {
     [TestFixture]
     public class TestStructInjection : TestWithContainer
@@ -24,12 +24,11 @@ namespace Zenject.Tests
         [Test]
         public void TestCase1()
         {
-            Container.Bind<Test1>().ToInstance(new Test1());
-            Container.Bind<Test2>().ToSingle();
+            Container.Bind<Test1>().FromInstance(new Test1()).NonLazy();
+            Container.Bind<Test2>().AsSingle().NonLazy();
 
-            AssertValidates();
+            Container.Validate();
 
-            Assert.That(Container.ValidateResolve<Test2>().IsEmpty());
             var t2 = Container.Resolve<Test2>();
 
             Assert.That(t2 != null);

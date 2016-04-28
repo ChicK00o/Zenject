@@ -5,7 +5,7 @@ using System.Linq;
 using ModestTree;
 using Assert=ModestTree.Assert;
 
-namespace Zenject.Tests
+namespace Zenject.Tests.Other
 {
     [TestFixture]
     public class TestGenericContract : TestWithContainer
@@ -22,9 +22,13 @@ namespace Zenject.Tests
         [Test]
         public void TestToSingle()
         {
-            Container.Bind(typeof(Test1<>)).ToSingle();
+            Container.Bind(typeof(Test1<>)).AsSingle();
 
-            AssertValidates();
+            Container.BindRootResolve<Test1<int>>();
+            Container.BindRootResolve<Test1<bool>>();
+            Container.BindRootResolve<Test1<string>>();
+
+            Container.Validate();
 
             var test1 = Container.Resolve<Test1<int>>();
             Assert.That(test1.Data == 0);
@@ -39,9 +43,13 @@ namespace Zenject.Tests
         [Test]
         public void TestToTransient()
         {
-            Container.Bind(typeof(Test1<>)).ToTransient();
+            Container.Bind(typeof(Test1<>)).AsTransient();
 
-            AssertValidates();
+            Container.BindRootResolve<Test1<int>>();
+            Container.BindRootResolve<Test1<bool>>();
+            Container.BindRootResolve<Test1<string>>();
+
+            Container.Validate();
 
             var test1 = Container.Resolve<Test1<int>>();
             Assert.That(test1.Data == 0);
