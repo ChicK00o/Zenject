@@ -1,4 +1,4 @@
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 
 using System;
 using System.Collections.Generic;
@@ -67,6 +67,12 @@ namespace Zenject
             foreach (var component in GetInjectableComponents().ToList())
             {
                 Assert.That(!component.GetType().DerivesFrom<MonoInstaller>());
+
+                if (component is MonoFacade)
+                {
+                    Assert.That(component == _facade,
+                        "Found MonoFacade derived class that is not hooked up to GameObjectCompositionRoot.  If you use MonoFacade, you must indicate this to GameObjectCompositionRoot by dragging and dropping it to the Facade field in the inspector");
+                }
 
                 _container.Inject(component);
             }

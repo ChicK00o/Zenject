@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ModestTree;
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 using UnityEngine;
 #endif
 
@@ -13,11 +13,10 @@ namespace Zenject
     {
         public FactoryFromBinderBase(
             BindInfo bindInfo,
+            Type factoryType,
             BindFinalizerWrapper finalizerWrapper)
             : base(bindInfo)
         {
-            var factoryType = bindInfo.ContractTypes.Single();
-
             // Note that it doesn't derive from Factory<TContract>
             // when used with To<>, so we can only check IDynamicFactory
             Assert.That(factoryType.DerivesFrom<IDynamicFactory>());
@@ -100,7 +99,7 @@ namespace Zenject
             return this;
         }
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 
         public GameObjectNameGroupNameBinder FromGameObject()
         {

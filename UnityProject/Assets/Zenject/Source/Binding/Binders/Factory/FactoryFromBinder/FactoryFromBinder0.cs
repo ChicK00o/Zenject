@@ -7,8 +7,10 @@ namespace Zenject
     public class FactoryFromBinder<TContract> : FactoryFromBinderBase<TContract>
     {
         public FactoryFromBinder(
-            BindInfo bindInfo, BindFinalizerWrapper finalizerWrapper)
-            : base(bindInfo, finalizerWrapper)
+            BindInfo bindInfo,
+            Type factoryType,
+            BindFinalizerWrapper finalizerWrapper)
+            : base(bindInfo, factoryType, finalizerWrapper)
         {
         }
 
@@ -64,7 +66,7 @@ namespace Zenject
                 BindInfo, FactoryType, FinalizerWrapper, subIdentifier);
         }
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 
         public ConditionBinder FromResource(string resourcePath)
         {

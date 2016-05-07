@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using ModestTree;
 using System.Linq;
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 using UnityEngine;
 #endif
 
@@ -47,7 +47,11 @@ namespace Zenject
 
         public FromBinderNonGeneric To(params Type[] concreteTypes)
         {
-            BindingUtil.AssertConcreteTypeListIsNotEmpty(concreteTypes);
+            return To((IEnumerable<Type>)concreteTypes);
+        }
+
+        public FromBinderNonGeneric To(IEnumerable<Type> concreteTypes)
+        {
             BindingUtil.AssertIsDerivedFromTypes(concreteTypes, BindInfo.ContractTypes);
 
             BindInfo.ToChoice = ToChoices.Concrete;
@@ -55,6 +59,19 @@ namespace Zenject
 
             return new FromBinderNonGeneric(
                 BindInfo, FinalizerWrapper);
+        }
+
+        public FromBinderNonGeneric To(
+            Action<ConventionSelectTypesBinder> generator)
+        {
+            var bindInfo = new ConventionBindInfo();
+
+            // Automatically filter by the given contract types
+            bindInfo.AddTypeFilter(
+                concreteType => BindInfo.ContractTypes.All(contractType => concreteType.DerivesFromOrEqual(contractType)));
+
+            generator(new ConventionSelectTypesBinder(bindInfo));
+            return To(bindInfo.ResolveTypes());
         }
     }
 }

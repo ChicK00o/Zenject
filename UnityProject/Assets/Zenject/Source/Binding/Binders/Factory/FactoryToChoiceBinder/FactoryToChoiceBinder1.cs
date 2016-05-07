@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using ModestTree;
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 using UnityEngine;
 #endif
 
@@ -12,9 +12,9 @@ namespace Zenject
     public class FactoryToChoiceBinder<TParam1, TContract> : FactoryFromBinder<TParam1, TContract>
     {
         public FactoryToChoiceBinder(
-            BindInfo bindInfo,
+            BindInfo bindInfo, Type factoryType, 
             BindFinalizerWrapper finalizerWrapper)
-            : base(bindInfo, finalizerWrapper)
+            : base(bindInfo, factoryType, finalizerWrapper)
         {
         }
 
@@ -35,7 +35,7 @@ namespace Zenject
             };
 
             return new FactoryFromBinder<TParam1, TConcrete>(
-                BindInfo, FinalizerWrapper);
+                BindInfo, FactoryType, FinalizerWrapper);
         }
     }
 }

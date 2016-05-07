@@ -6,7 +6,7 @@ using ModestTree;
 using ModestTree.Util;
 using Zenject.Internal;
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 using UnityEngine;
 #endif
 
@@ -99,7 +99,7 @@ namespace Zenject
             }
         }
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 
         public Transform DefaultParent
         {
@@ -276,7 +276,7 @@ namespace Zenject
             FlushBindings();
 
             var container = new DiContainer(this, isValidating);
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
             container.DefaultParent = this.DefaultParent;
 #endif
             foreach (var binding in _processedBindings.Where(x => x.InheritInSubContainers))
@@ -374,7 +374,7 @@ namespace Zenject
 
             // If we are asking for a List<int>, we should also match for any localProviders that are bound to the open generic type List<>
             // Currently it only matches one and not the other - not totally sure if this is better than returning both
-            if (bindingId.Type.IsGenericType && _providers.TryGetValue(new BindingId(bindingId.Type.GetGenericTypeDefinition(), bindingId.Identifier), out localProviders))
+            if (bindingId.Type.IsGenericType() && _providers.TryGetValue(new BindingId(bindingId.Type.GetGenericTypeDefinition(), bindingId.Identifier), out localProviders))
             {
                 return localProviders;
             }
@@ -439,7 +439,7 @@ namespace Zenject
                 return;
             }
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
             if (rootContext.MemberType.DerivesFrom<DecoratorInstaller>())
             {
                 return;
@@ -551,7 +551,7 @@ namespace Zenject
 
             FlushBindings();
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
             if (installerType.DerivesFrom<MonoInstaller>())
             {
                 var gameObj = CreateAndParentPrefabResource("Installers/" + installerType.Name());
@@ -694,7 +694,7 @@ namespace Zenject
                 // If it's a generic list then try matching multiple instances to its generic type
                 if (ReflectionUtil.IsGenericList(context.MemberType))
                 {
-                    var subType = context.MemberType.GetGenericArguments().Single();
+                    var subType = context.MemberType.GenericArguments().Single();
 
                     var subContext = context.Clone();
                     subContext.MemberType = subType;
@@ -824,7 +824,7 @@ namespace Zenject
             // inject into factories
             return type.DerivesFrom<IInstaller>()
                 || type.DerivesFrom<IValidatable>()
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
                 || type.DerivesFrom<CompositionRoot>()
                 || type.DerivesFrom<DecoratorInstaller>()
 #endif
@@ -835,7 +835,7 @@ namespace Zenject
         {
             Type concreteType = args.TypeInfo.Type;
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
             Assert.That(!concreteType.DerivesFrom<UnityEngine.Component>(),
                 "Error occurred while instantiating object of type '{0}'. Instantiator should not be used to create new mono behaviours.  Must use InstantiatePrefabForComponent, InstantiatePrefab, or InstantiateComponent.", concreteType.Name());
 #endif
@@ -955,7 +955,7 @@ namespace Zenject
                 Assert.IsEqual(injectable.GetType(), injectableType);
             }
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
             Assert.That(injectableType != typeof(GameObject),
                 "Use InjectGameObject to Inject game objects instead of Inject method");
 #endif
@@ -1053,7 +1053,7 @@ namespace Zenject
             }
         }
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
 
         public GameObject InstantiatePrefabResourceExplicit(
             string resourcePath, List<TypeValuePair> extraArgs)
@@ -1221,7 +1221,7 @@ namespace Zenject
 
             var componentType = args.TypeInfo.Type;
 
-            Assert.That(componentType.IsInterface || componentType.DerivesFrom<Component>(),
+            Assert.That(componentType.IsInterface() || componentType.DerivesFrom<Component>(),
                 "Expected type '{0}' to derive from UnityEngine.Component", componentType.Name());
 
             var gameObj = (GameObject)GameObject.Instantiate(prefab);
@@ -1292,7 +1292,7 @@ namespace Zenject
                 concreteType, InjectUtil.CreateArgList(extraArgs));
         }
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
         // See comment in IInstantiator.cs for description of this method
         public TContract InstantiateComponent<TContract>(GameObject gameObject)
             where TContract : Component
@@ -1463,7 +1463,7 @@ namespace Zenject
 
         ////////////// Convenience methods for IResolver ////////////////
 
-#if !ZEN_NOT_UNITY3D
+#if !NOT_UNITY3D
         // See comment in IResolver.cs for description of this method
         public void InjectGameObject(
             GameObject gameObject)
@@ -1678,7 +1678,7 @@ namespace Zenject
         // See comment in IResolver.cs for description of this method
         public List<TContract> ResolveAll<TContract>(string identifier)
         {
-            return ResolveAll<TContract>(identifier, false);
+            return ResolveAll<TContract>(identifier, true);
         }
 
         // See comment in IResolver.cs for description of this method
@@ -1705,7 +1705,7 @@ namespace Zenject
         // See comment in IResolver.cs for description of this method
         public IList ResolveAll(Type contractType, string identifier)
         {
-            return ResolveAll(contractType, identifier, false);
+            return ResolveAll(contractType, identifier, true);
         }
 
         // See comment in IResolver.cs for description of this method
@@ -1824,16 +1824,35 @@ namespace Zenject
 
         public ConcreteBinderNonGeneric Bind(params Type[] contractTypes)
         {
+            return Bind((IEnumerable<Type>)contractTypes);
+        }
+
+        public ConcreteBinderNonGeneric Bind(IEnumerable<Type> contractTypes)
+        {
             return Bind((string)null, contractTypes);
         }
 
         public ConcreteBinderNonGeneric Bind(string identifier, params Type[] contractTypes)
         {
-            Assert.That(contractTypes.All(x => !x.DerivesFrom<IDynamicFactory>()),
+            return Bind(identifier, (IEnumerable<Type>)contractTypes);
+        }
+
+        public ConcreteBinderNonGeneric Bind(string identifier, IEnumerable<Type> contractTypes)
+        {
+            var contractTypesList = contractTypes.ToList();
+            Assert.That(contractTypesList.All(x => !x.DerivesFrom<IDynamicFactory>()),
                 "You should not use Container.Bind for factory classes.  Use Container.BindFactory instead.");
 
-            var bindInfo = new BindInfo(identifier, contractTypes.ToList());
+            var bindInfo = new BindInfo(identifier, contractTypesList);
             return new ConcreteBinderNonGeneric(bindInfo, StartBinding());
+        }
+
+        public ConcreteBinderNonGeneric Bind(
+            Action<ConventionSelectTypesBinder> generator)
+        {
+            var bindInfo = new ConventionBindInfo();
+            generator(new ConventionSelectTypesBinder(bindInfo));
+            return Bind(bindInfo.ResolveTypes());
         }
 
         // This is equivalent to calling NonLazy() at the end of your bind statement
@@ -1877,7 +1896,7 @@ namespace Zenject
         {
             // We must only have one dependency root per container
             // We need this when calling this with a GameObjectCompositionRoot
-            return Bind(identifier, type.GetInterfaces().ToArray());
+            return Bind(identifier, type.Interfaces().ToArray());
         }
 
         public ConcreteBinderNonGeneric BindAllInterfacesAndSelf<T>()
@@ -1901,7 +1920,7 @@ namespace Zenject
             // We need this when calling this with a GameObjectCompositionRoot
             return Bind(
                 identifier,
-                type.GetInterfaces().Append(type).ToArray());
+                type.Interfaces().Append(type).ToArray());
         }
 
         public ScopeBinder BindInstance<TContract>(string identifier, TContract obj)
@@ -1912,6 +1931,18 @@ namespace Zenject
         public ScopeBinder BindInstance<TContract>(TContract obj)
         {
             return Bind<TContract>().FromInstance(obj);
+        }
+
+        public FactoryToChoiceBinder<TContract> BindIFactory<TContract>()
+        {
+            return BindIFactory<TContract>(null);
+        }
+
+        public FactoryToChoiceBinder<TContract> BindIFactory<TContract>(string identifier)
+        {
+            var bindInfo = new BindInfo(identifier, typeof(IFactory<TContract>));
+            return new FactoryToChoiceBinder<TContract>(
+                bindInfo, typeof(Factory<TContract>), StartBinding());
         }
 
         public FactoryToChoiceBinder<TContract> BindFactory<TContract, TFactory>()
@@ -1925,7 +1956,19 @@ namespace Zenject
         {
             var bindInfo = new BindInfo(identifier, typeof(TFactory));
             return new FactoryToChoiceBinder<TContract>(
-                bindInfo, StartBinding());
+                bindInfo, typeof(TFactory), StartBinding());
+        }
+
+        public FactoryToChoiceBinder<TParam1, TContract> BindIFactory<TParam1, TContract>()
+        {
+            return BindIFactory<TParam1, TContract>(null);
+        }
+
+        public FactoryToChoiceBinder<TParam1, TContract> BindIFactory<TParam1, TContract>(string identifier)
+        {
+            var bindInfo = new BindInfo(identifier, typeof(IFactory<TParam1, TContract>));
+            return new FactoryToChoiceBinder<TParam1, TContract>(
+                bindInfo, typeof(Factory<TParam1, TContract>), StartBinding());
         }
 
         public FactoryToChoiceBinder<TParam1, TContract> BindFactory<TParam1, TContract, TFactory>()
@@ -1939,7 +1982,19 @@ namespace Zenject
         {
             var bindInfo = new BindInfo(identifier, typeof(TFactory));
             return new FactoryToChoiceBinder<TParam1, TContract>(
-                bindInfo, StartBinding());
+                bindInfo, typeof(TFactory), StartBinding());
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TContract> BindIFactory<TParam1, TParam2, TContract>()
+        {
+            return BindIFactory<TParam1, TParam2, TContract>(null);
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TContract> BindIFactory<TParam1, TParam2, TContract>(string identifier)
+        {
+            var bindInfo = new BindInfo(identifier, typeof(IFactory<TParam1, TParam2, TContract>));
+            return new FactoryToChoiceBinder<TParam1, TParam2, TContract>(
+                bindInfo, typeof(Factory<TParam1, TParam2, TContract>), StartBinding());
         }
 
         public FactoryToChoiceBinder<TParam1, TParam2, TContract> BindFactory<TParam1, TParam2, TContract, TFactory>()
@@ -1953,7 +2008,19 @@ namespace Zenject
         {
             var bindInfo = new BindInfo(identifier, typeof(TFactory));
             return new FactoryToChoiceBinder<TParam1, TParam2, TContract>(
-                bindInfo, StartBinding());
+                bindInfo, typeof(TFactory), StartBinding());
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TContract> BindIFactory<TParam1, TParam2, TParam3, TContract>()
+        {
+            return BindIFactory<TParam1, TParam2, TParam3, TContract>(null);
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TContract> BindIFactory<TParam1, TParam2, TParam3, TContract>(string identifier)
+        {
+            var bindInfo = new BindInfo(identifier, typeof(IFactory<TParam1, TParam2, TParam3, TContract>));
+            return new FactoryToChoiceBinder<TParam1, TParam2, TParam3, TContract>(
+                bindInfo, typeof(Factory<TParam1, TParam2, TParam3, TContract>), StartBinding());
         }
 
         public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TContract> BindFactory<TParam1, TParam2, TParam3, TContract, TFactory>()
@@ -1967,7 +2034,19 @@ namespace Zenject
         {
             var bindInfo = new BindInfo(identifier, typeof(TFactory));
             return new FactoryToChoiceBinder<TParam1, TParam2, TParam3, TContract>(
-                bindInfo, StartBinding());
+                bindInfo, typeof(TFactory), StartBinding());
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TContract> BindIFactory<TParam1, TParam2, TParam3, TParam4, TContract>()
+        {
+            return BindIFactory<TParam1, TParam2, TParam3, TParam4, TContract>(null);
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TContract> BindIFactory<TParam1, TParam2, TParam3, TParam4, TContract>(string identifier)
+        {
+            var bindInfo = new BindInfo(identifier, typeof(IFactory<TParam1, TParam2, TParam3, TParam4, TContract>));
+            return new FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TContract>(
+                bindInfo, typeof(Factory<TParam1, TParam2, TParam3, TParam4, TContract>), StartBinding());
         }
 
         public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TContract> BindFactory<TParam1, TParam2, TParam3, TParam4, TContract, TFactory>()
@@ -1981,7 +2060,19 @@ namespace Zenject
         {
             var bindInfo = new BindInfo(identifier, typeof(TFactory));
             return new FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TContract>(
-                bindInfo, StartBinding());
+                bindInfo, typeof(TFactory), StartBinding());
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TParam5, TContract> BindIFactory<TParam1, TParam2, TParam3, TParam4, TParam5, TContract>()
+        {
+            return BindIFactory<TParam1, TParam2, TParam3, TParam4, TParam5, TContract>(null);
+        }
+
+        public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TParam5, TContract> BindIFactory<TParam1, TParam2, TParam3, TParam4, TParam5, TContract>(string identifier)
+        {
+            var bindInfo = new BindInfo(identifier, typeof(IFactory<TParam1, TParam2, TParam3, TParam4, TParam5, TContract>));
+            return new FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TParam5, TContract>(
+                bindInfo, typeof(Factory<TParam1, TParam2, TParam3, TParam4, TParam5, TContract>), StartBinding());
         }
 
         public FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TParam5, TContract> BindFactory<TParam1, TParam2, TParam3, TParam4, TParam5, TContract, TFactory>()
@@ -1995,7 +2086,7 @@ namespace Zenject
         {
             var bindInfo = new BindInfo(identifier, typeof(TFactory));
             return new FactoryToChoiceBinder<TParam1, TParam2, TParam3, TParam4, TParam5, TContract>(
-                bindInfo, StartBinding());
+                bindInfo, typeof(TFactory), StartBinding());
         }
 
         ////////////// Types ////////////////

@@ -5,7 +5,7 @@ using System.Text;
 using NUnit.Framework;
 using ModestTree;
 using Assert=ModestTree.Assert;
-using Zenject.Commands;
+using Zenject;
 
 namespace Zenject.Tests
 {
@@ -23,7 +23,7 @@ namespace Zenject.Tests
             Container.BindCommand<DoSomethingCommand>()
                 .To<Bar>(x => x.Execute).AsSingle();
 
-            var bar = Container.Resolve<Bar>();
+            Container.Resolve<Bar>();
             var cmd = Container.Resolve<DoSomethingCommand>();
 
             Assert.IsEqual(Bar.InstanceCount, 1);
@@ -73,7 +73,7 @@ namespace Zenject.Tests
             Container.BindCommand<DoSomethingCommand>()
                 .To<Bar>(x => x.Execute).AsCached();
 
-            var bar = Container.Resolve<Bar>();
+            Container.Resolve<Bar>();
             var cmd = Container.Resolve<DoSomethingCommand>();
 
             Assert.IsEqual(Bar.InstanceCount, 1);
@@ -149,7 +149,7 @@ namespace Zenject.Tests
             Container.BindCommand<DoSomethingCommand>()
                 .ToOptionalResolve<Bar>(x => x.Execute);
 
-            var bar = Container.Resolve<Bar>();
+            Container.Resolve<Bar>();
             var cmd = Container.Resolve<DoSomethingCommand>();
 
             Assert.That(!Bar.WasTriggered);

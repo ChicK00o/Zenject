@@ -5,7 +5,7 @@ using System.Linq;
 using ModestTree;
 using ModestTree.Util;
 
-namespace Zenject.Commands
+namespace Zenject
 {
     public static class SignalExtensions
     {
@@ -35,7 +35,7 @@ namespace Zenject.Commands
             Assert.IsNotNull(concreteSignalType);
             Assert.That(concreteSignalType.DerivesFrom<ISignal>());
 
-            container.Bind(concreteSignalType.BaseType)
+            container.Bind(concreteSignalType.BaseType())
                 .To(concreteSignalType)
                 .AsSingle(identifier)
                 .When(ctx => ctx.ObjectType != null && ctx.ObjectType.DerivesFromOrEqual<TTrigger>() && ctx.ConcreteIdentifier == identifier);
